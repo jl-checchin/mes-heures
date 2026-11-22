@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mes Heures – Aide à domicile</title>
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mes Heures">
+<style>
+:root{--p:#0f766e;--p2:#14b8a6;--bg:#f1f5f4;--card:#fff;--txt:#1f2937;--mut:#6b7280;--ok:#16a34a;--ko:#dc2626;--warn:#d97706;--bd:#e5e7eb}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#app{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 90px)}
+header.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+header.top svg{width:42px;height:42px;flex:none;border-radius:10px}
+header.top h1{font-size:19px;margin:0}
+header.top small{color:var(--mut)}
+.card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+h2{font-size:17px;margin:0 0 10px}
+h3{margin:0 0 10px;font-size:18px}
+.big{font-size:34px;font-weight:800;letter-spacing:-.5px}
+.compteur.ok{border-left:8px solid var(--ok)} .compteur.ko{border-left:8px solid var(--ko)}
+.compteur.ok .big{color:var(--ok)} .compteur.ko .big{color:var(--ko)}
+.bar{height:12px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin:8px 0}
+.bar>i{display:block;height:100%;border-radius:6px}
+.ok .bar>i{background:var(--ok)} .ko .bar>i{background:var(--ko)}
+.mut{color:var(--mut);font-size:14px}
+.badge{display:inline-block;white-space:nowrap;font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;background:#e5e7eb;color:#374151;vertical-align:middle}
+.b-ok{background:#dcfce7;color:#166534}.b-ko{background:#fee2e2;color:#991b1b}.b-run{background:#fef3c7;color:#92400e}.b-hors{background:#e0e7ff;color:#3730a3}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+.between{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.btn{appearance:none;border:0;background:var(--p);color:#fff;font:inherit;font-weight:700;padding:12px 14px;border-radius:10px;cursor:pointer;width:100%}
+.btn.ghost{background:#e6f4f1;color:var(--p)}
+.btn.red{background:#fee2e2;color:#991b1b}
+.btn.sm{padding:8px 10px;font-size:14px;width:auto}
+.btn:active{opacity:.8}
+label{display:block;font-size:14px;color:var(--mut);margin:8px 0 4px}
+input,select,textarea{width:100%;font:inherit;padding:10px;border:1px solid var(--bd);border-radius:10px;background:#fff;color:var(--txt)}
+textarea{min-height:70px}
+.inter{border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+.inter.annule{opacity:.6}
+.inter .nom{font-weight:700;font-size:17px}
+.inter .com{background:#fffbeb;border-radius:8px;padding:6px 8px;font-size:14px;margin-top:6px}
+.inter .acts{display:flex;gap:8px;margin-top:10px}
+.inter .acts .btn{flex:1}
+.km{font-size:14px;color:#374151;margin-top:4px}
+.daynav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.daynav b{flex:1;text-align:center;text-transform:capitalize}
+.daynav .btn{width:auto;padding:8px 14px}
+nav#nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--bd);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+nav#nav button{flex:1;max-width:130px;border:0;background:none;font:inherit;font-size:12px;color:var(--mut);padding:8px 0 10px;cursor:pointer}
+nav#nav button span{display:block;font-size:22px}
+nav#nav button.on{color:var(--p);font-weight:700}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+#modal.hidden{display:none}
+.sheet{background:#fff;width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 16px);max-height:92vh;overflow:auto}
+.err{color:var(--ko);font-weight:600;min-height:1em;margin:8px 0}
+.hint{font-size:13px;color:var(--warn);margin-top:4px}
+.info{background:#ecfeff;border-radius:10px;padding:8px 10px;font-size:14px;margin-top:8px}
+.plan-line{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd);font-size:15px}
+.plan-line:last-child{border-bottom:0}
+.plan-line .d{width:64px;color:var(--mut);font-size:13px;text-transform:capitalize}
+.plan-line .x{flex:1}
+.plan-line button{border:0;background:none;font-size:18px;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 4px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
+th{color:var(--mut);font-weight:600}
+.tot{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tot div{background:#f8fafc;border-radius:10px;padding:8px}
+.tot b{display:block;font-size:18px}
+.warnbox{background:#fff7ed;color:#9a3412;border-radius:10px;padding:8px 10px;font-size:14px;margin-top:8px}
+.center{text-align:center}
+.banner{border-radius:10px;padding:8px 10px;margin-bottom:10px;font-weight:600;font-size:15px}
+.fer{background:#fef9c3;color:#854d0e}.abs{background:#dbeafe;color:#1e40af}
+.b-fer{background:#fef9c3;color:#854d0e}.b-abs{background:#dbeafe;color:#1e40af}
+.plus{display:flex;justify-content:space-between;align-items:center;background:#eef2ff;border-radius:10px;padding:10px 12px;margin-top:10px}
+.plus b{font-size:24px;color:#3730a3;display:block}
+.plus svg{width:96px;height:86px;flex:none}
+.plus .rempl{transform-box:fill-box;transform-origin:bottom;animation:fillup 1.2s ease-out}
+@keyframes fillup{from{transform:scaleY(0)}}
+.jours{display:flex;gap:6px;flex-wrap:wrap}
+.jours label{display:flex;align-items:center;gap:4px;margin:0;background:#f1f5f9;padding:8px 10px;border-radius:8px;color:var(--txt)}
+.jours input{width:auto}
+.logo-big svg{width:110px;height:110px;border-radius:26px;box-shadow:0 6px 20px rgba(15,118,110,.35)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav id="nav"></nav>
+<div id="modal" class="hidden"></div>
+<script>
+"use strict";
+const ICON=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#0f5f73"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#g)"/><path d="M256 92 L82 238 h52 v176 h244 V238 h52 Z" fill="#fff" stroke="#fff" stroke-width="20" stroke-linejoin="round"/><circle cx="256" cy="318" r="72" fill="#0f766e"/><circle cx="256" cy="318" r="58" fill="#fff"/><path d="M256 318 V276 M256 318 L288 338" stroke="#0f766e" stroke-width="15" stroke-linecap="round" fill="none"/><path d="M392 196 C352 166 340 132 366 118 C382 110 392 122 392 132 C392 122 402 110 418 118 C444 132 432 166 392 196 Z" fill="#fb7185"/></svg>`;
+(function(){const l=document.createElement('link');l.rel='icon';l.href='data:image/svg+xml,'+encodeURIComponent(ICON);document.head.appendChild(l)})();
+
+const KEY='mesheures_demo_v1';
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const MOIS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const JL=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+const JC=['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
+function dstr(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function parse(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
+function todayStr(){return dstr(new Date())}
+function nowHM(){const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())}
+const toMin=t=>{if(!t)return 0;const[a,b]=t.split(':').map(Number);return a*60+b};
+function fmtH(m){m=Math.round(m);const s=m<0?'-':'';m=Math.abs(m);const h=Math.floor(m/60),r=m%60;return s+h+' h'+(r?' '+pad(r):'')}
+function dateLong(s){const d=parse(s);return JL[d.getDay()]+' '+d.getDate()+' '+MOIS[d.getMonth()]}
+function dateCourt(s){const d=parse(s);return JC[d.getDay()]+' '+d.getDate()}
+function addDays(s,n){const d=parse(s);d.setDate(d.getDate()+n);return dstr(d)}
+function monthLabel(ym){const[y,m]=ym.split('-').map(Number);return MOIS[m-1]+' '+y}
+function addMonth(ym,n){const[y,m]=ym.split('-').map(Number);const d=new Date(y,m-1+n,1);return d.getFullYear()+'-'+pad(d.getMonth()+1)}
+const uid=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtKm=v=>(Math.round(v*10)/10).toLocaleString('fr-FR')+' km';
+
+function blank(){return{profil:null,benef:[],inter:[],maison:{},valide:{},abs:[]}}
+function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let S=load()||blank();
+const UI={tab:'accueil',day:todayStr(),month:todayStr().slice(0,7)};
+
+const benefNom=id=>(S.benef.find(b=>b.id===id)||{nom:'?'}).nom;
+const dureeReel=i=>i.statut==='fait'?Math.max(0,toMin(i.reelFin)-toMin(i.reelDebut)):0;
+const dureePrev=i=>i.hors?0:Math.max(0,toMin(i.prevFin)-toMin(i.prevDebut));
+const keyT=i=>toMin(i.reelDebut||i.prevDebut);
+function interDay(day){return S.inter.filter(i=>i.date===day).sort((a,b)=>keyT(a)-keyT(b))}
+function interMonth(ym){return S.inter.filter(i=>i.date.startsWith(ym)).sort((a,b)=>a.date.localeCompare(b.date)||keyT(a)-keyT(b))}
+
+/* ---------- Fériés, absences, congés ---------- */
+const _fer={};
+function feries(y){if(_fer[y])return _fer[y];
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+  const P=dstr(new Date(y,mo-1,da)),r={};
+  [['01-01',"Jour de l'an"],['05-01','Fête du Travail'],['05-08','Victoire 1945'],['07-14','Fête nationale'],['08-15','Assomption'],['11-01','Toussaint'],['11-11','Armistice'],['12-25','Noël']].forEach(([md,n])=>r[y+'-'+md]=n);
+  r[addDays(P,1)]='Lundi de Pâques';r[addDays(P,39)]='Ascension';r[addDays(P,50)]='Lundi de Pentecôte';
+  return _fer[y]=r}
+const ferie=d=>feries(Number(d.slice(0,4)))[d]||null;
+const joursP=()=>(S.profil&&S.profil.jours&&S.profil.jours.length)?S.profil.jours:[1,2,3,4,5];
+const jourTravaille=d=>joursP().includes(parse(d).getDay());
+function forfaitJour(){return (Number(S.profil.heures)||0)*60/(joursP().length*52/12)}
+const ABS={cp:'Congés payés',maladie:'Maladie',autre:'Absence autorisée'};
+function absenceDe(d){return (S.abs||[]).find(a=>a.debut<=d&&d<=a.fin)||null}
+function joursDecomptes(a){ /* jours ouvrés : jours travaillés de l'agent, hors fériés */
+  const r=[];let x=a.debut;
+  while(x<=a.fin){if(jourTravaille(x)&&!ferie(x))r.push(x);x=addDays(x,1)}
+  return r}
+function credits(ym,jusqua){
+  let cp=0,fer=0,mal=0,autre=0;const fj=forfaitJour();const[y,m]=ym.split('-').map(Number);const nb=new Date(y,m,0).getDate();
+  for(let d=1;d<=nb;d++){const ds=ym+'-'+pad(d);if(jusqua&&ds>jusqua)break;if(!jourTravaille(ds))continue;
+    if(ferie(ds)){if(!S.inter.some(i=>i.date===ds&&i.statut==='fait'))fer+=fj;continue}
+    const a=absenceDe(ds);if(a){if(a.type==='cp')cp+=fj;else if(a.type==='maladie')mal+=fj;else autre+=fj}}
+  return{cp,fer,mal,autre}}
+function carences(ym){return (S.abs||[]).filter(a=>a.type==='maladie'&&a.debut.startsWith(ym)).map(a=>a.debut)}
+function droitConges(y){
+  let droit=5*joursP().length;const e=S.profil.entree;
+  if(e&&e>y+'-01-01'){if(e>y+'-12-31')return 0;
+    const deb=parse(e),fin=new Date(y,11,31),tot=(new Date(y,11,31)-new Date(y,0,1))/864e5+1;
+    droit=Math.round(droit*((fin-deb)/864e5+1)/tot*2)/2}
+  return droit}
+function conges(y){
+  let pris=0,fen=0;
+  (S.abs||[]).filter(a=>a.type==='cp').forEach(a=>joursDecomptes(a).forEach(d=>{if(d.startsWith(String(y))){pris++;const mo=Number(d.slice(5,7));if(mo<=3||mo>=10)fen++}}));
+  const bonus=fen>=7?2:fen>=5?1:0,droit=droitConges(y),report=Number(S.profil.report)||0;
+  return{pris,fen,bonus,droit,report,restant:droit+report+bonus-pris}}
+const nj=v=>v.toLocaleString('fr-FR');
+function joursHTML(sel){return'<div class="jours">'+[[1,'lun.'],[2,'mar.'],[3,'mer.'],[4,'jeu.'],[5,'ven.'],[6,'sam.']].map(([v,l])=>`<label><input type="checkbox" class="jr" value="${v}" ${sel.includes(v)?'checked':''}>${l}</label>`).join('')+'</div>'}
+const lireJours=()=>[...document.querySelectorAll('.jr:checked')].map(e=>Number(e.value));
+
+/* ---------- Kilomètres ---------- */
+function kmJour(day){
+  const m=S.maison[day]||{};const dom=!!(S.profil&&S.profil.domicile);
+  const faits=interDay(day).filter(i=>i.statut==='fait'&&i.kmArrivee!=null&&i.kmDepart!=null);
+  let total=0,legs={},prev=(dom&&m.dep!=null)?m.dep:null,from=prev!=null?'maison':null;
+  faits.forEach(i=>{
+    const t=prev!=null?i.kmArrivee-prev:null;const p=i.kmDepart-i.kmArrivee;
+    legs[i.id]={trajet:t,pendant:p,from:from};total+=(t||0)+p;prev=i.kmDepart;from=i.benefId;
+  });
+  let retour=null;
+  if(dom&&m.ret!=null&&faits.length){retour=m.ret-faits[faits.length-1].kmDepart;total+=retour}
+  const voiture=(m.dep!=null&&m.ret!=null)?m.ret-m.dep:null;
+  return{total,legs,retour,voiture};
+}
+function kmMois(ym){let t=0;const days=new Set(S.inter.filter(i=>i.date.startsWith(ym)).map(i=>i.date));days.forEach(d=>t+=kmJour(d).total);return t}
+function dernierCompteur(day){let mx=null;const f=v=>{if(v!=null&&!isNaN(v)&&(mx==null||v>mx))mx=v};
+  S.inter.forEach(i=>{if(i.date<=day){f(i.kmArrivee);f(i.kmDepart)}});
+  Object.keys(S.maison).forEach(d=>{if(d<=day){f(S.maison[d].dep);f(S.maison[d].ret)}});return mx}
+function pointPrecedent(day,inter){
+  const faits=interDay(day).filter(i=>i.statut==='fait'&&i.id!==inter.id&&i.kmDepart!=null&&keyT(i)<=toMin(inter.prevDebut||inter.reelDebut));
+  if(faits.length){const l=faits[faits.length-1];return{km:l.kmDepart,from:l.benefId,nom:benefNom(l.benefId)}}
+  const m=S.maison[day];if(S.profil.domicile&&m&&m.dep!=null)return{km:m.dep,from:'maison',nom:'la maison'};
+  return null;
+}
+function trajetHabituel(from,to){
+  const vals=[];const days=new Set(S.inter.map(i=>i.date));
+  days.forEach(d=>{const k=kmJour(d);S.inter.forEach(i=>{if(i.date===d&&k.legs[i.id]&&k.legs[i.id].from===from&&i.benefId===to&&k.legs[i.id].trajet!=null)vals.push(k.legs[i.id].trajet)})});
+  if(!vals.length)return null;vals.sort((a,b)=>a-b);return vals[Math.floor(vals.length/2)];
+}
+
+/* ---------- Statistiques ---------- */
+function stats(ym){
+  const t=todayStr(),nm=toMin(nowHM()),cur=t.slice(0,7);
+  let real=0,prevTot=0,prevDate=0;
+  interMonth(ym).forEach(i=>{real+=dureeReel(i);if(i.statut!=='fait'&&absenceDe(i.date))return;const p=dureePrev(i);prevTot+=p;
+    if(ferie(i.date)&&i.statut!=='fait')return;if(i.date<t||(i.date===t&&toMin(i.prevFin)<=nm))prevDate+=p});
+  const cr=credits(ym),c=(Number(S.profil.heures)||0)*60,objectif=c,abs=cr.cp+cr.fer+cr.mal+cr.autre,total=real+abs;
+  const ok=ym<cur?total>=objectif:(ym>cur?true:real>=prevDate);
+  return{real,cp:cr.cp,fer:cr.fer,mal:cr.mal,autre:cr.autre,abs,total,objectif,c,prevTot,prevDate,ok,retard:ym<cur?objectif-total:prevDate-real,plus:Math.max(0,total-objectif)};
+}
+
+/* ---------- Modale ---------- */
+function modal(title,html,onOk,onInput,okLabel){
+  const m=$('#modal');
+  m.innerHTML=`<div class="sheet"><h3>${title}</h3><div class="mbody">${html}</div><p class="err" id="merr"></p><div class="row"><button class="btn ghost" id="mcancel">Fermer</button><button class="btn" id="mok">${okLabel||'Valider'}</button></div></div>`;
+  m.classList.remove('hidden');
+  const close=()=>m.classList.add('hidden');
+  $('#mcancel').onclick=close;
+  m.onclick=e=>{if(e.target===m)close()};
+  $('#mok').onclick=()=>{const r=onOk();if(r===true||r===undefined){close();save();render()}else $('#merr').textContent=r};
+  if(onInput){m.querySelector('.mbody').addEventListener('input',onInput);onInput()}
+}
+const val=id=>{const e=document.getElementById(id);return e?e.value:''};
+const num=id=>{const v=val(id).replace(',','.').trim();return v===''?null:Number(v)};
+function toast(msg){modal('Information',`<p>${msg}</p>`,()=>true,null,'OK')}
+
+/* ---------- Actions intervention ---------- */
+function actArrivee(i){
+  const def=i.date===todayStr()?nowHM():i.prevDebut;
+  const prev=pointPrecedent(i.date,i);const dc=dernierCompteur(i.date);
+  modal('Arrivée chez '+esc(benefNom(i.benefId)),`
+    <div class="mut">Prévu : ${i.prevDebut} – ${i.prevFin}</div>
+    <label>Heure d'arrivée</label><input type="time" id="f_h" value="${def}">
+    <label>Compteur de la voiture à l'arrivée (km)</label><input inputmode="numeric" id="f_km" value="${dc!=null?dc:''}">
+    <div class="info" id="f_info"></div>
+    <label>Commentaire</label><textarea id="f_c" placeholder="Retard, détour, imprévu…">${esc(i.commentaire)}</textarea>
+    <div class="hint" id="f_hint"></div>`,
+  ()=>{
+    const h=val('f_h'),km=num('f_km'),c=val('f_c').trim();
+    if(!h)return"Indique l'heure d'arrivée.";
+    if(km==null||isNaN(km))return'Indique le compteur.';
+    if(dc!=null&&km<dc&&!(prev&&km>=prev.km))return'Le compteur ne peut pas être inférieur au dernier relevé ('+dc+').';
+    if(besoin().length&&!c)return'Un commentaire est obligatoire : '+besoin().join(', ')+'.';
+    i.reelDebut=h;i.kmArrivee=km;i.commentaire=c;i.statut='encours';
+  },
+  ()=>{
+    const km=num('f_km');let txt='';
+    if(prev&&km!=null){txt='Trajet depuis '+esc(prev.nom)+' : <b>'+fmtKm(km-prev.km)+'</b>';const hab=trajetHabituel(prev.from,i.benefId);if(hab!=null)txt+=' (habituel : '+fmtKm(hab)+')'}
+    else txt='Premier trajet de la journée.';
+    $('#f_info').innerHTML=txt;const b=besoin();$('#f_hint').textContent=b.length?'⚠ Commentaire obligatoire : '+b.join(', '):'';
+  });
+  function besoin(){const r=[];const h=val('f_h'),km=num('f_km');
+    if(h&&Math.abs(toMin(h)-toMin(i.prevDebut))>10)r.push("heure d'arrivée différente du planning");
+    if(prev&&km!=null){const hab=trajetHabituel(prev.from,i.benefId);if(hab!=null&&Math.abs((km-prev.km)-hab)>2)r.push('trajet inhabituel')}
+    return r}
+}
+function actDepart(i){
+  const def=i.date===todayStr()?nowHM():i.prevFin;
+  modal('Départ de chez '+esc(benefNom(i.benefId)),`
+    <div class="mut">Prévu : ${i.prevDebut} – ${i.prevFin} · arrivée réelle ${i.reelDebut}</div>
+    <label>Heure de départ</label><input type="time" id="f_h" value="${def}">
+    <label>Compteur au départ (km)</label><input inputmode="numeric" id="f_km" value="${i.kmArrivee}">
+    <div class="info" id="f_info"></div>
+    <label>Commentaire</label><textarea id="f_c" placeholder="Courses, rendez-vous, prolongation…">${esc(i.commentaire)}</textarea>
+    <div class="hint" id="f_hint"></div>`,
+  ()=>{
+    const h=val('f_h'),km=num('f_km'),c=val('f_c').trim();
+    if(!h)return'Indique l\'heure de départ.';
+    if(toMin(h)<=toMin(i.reelDebut))return"L'heure de départ doit être après l'arrivée.";
+    if(km==null||isNaN(km)||km<i.kmArrivee)return'Le compteur de départ doit être ≥ '+i.kmArrivee+'.';
+    if(besoin().length&&!c)return'Un commentaire est obligatoire : '+besoin().join(', ')+'.';
+    i.reelFin=h;i.kmDepart=km;i.commentaire=c;i.statut='fait';
+  },
+  ()=>{const h=val('f_h'),km=num('f_km');
+    $('#f_info').innerHTML='Durée : <b>'+(h?fmtH(toMin(h)-toMin(i.reelDebut)):'–')+'</b> (prévu '+fmtH(dureePrev(i))+')'+(km!=null&&km>i.kmArrivee?' · km pendant l\'intervention : <b>'+fmtKm(km-i.kmArrivee)+'</b>':'');
+    const b=besoin();$('#f_hint').textContent=b.length?'⚠ Commentaire obligatoire : '+b.join(', '):''});
+  function besoin(){const r=[];const h=val('f_h'),km=num('f_km');
+    if(h&&Math.abs(toMin(h)-toMin(i.prevFin))>10)r.push('heure de départ différente du planning');
+    if(km!=null&&km>i.kmArrivee)r.push("km roulés pendant l'intervention");return r}
+}
+function actAnnuler(i){
+  modal('Annuler l\'intervention',`<div class="mut">${esc(benefNom(i.benefId))} · ${dateLong(i.date)} · ${i.prevDebut} – ${i.prevFin}</div>
+    <label>Motif (obligatoire)</label><textarea id="f_c" placeholder="Bénéficiaire absent, hospitalisation…"></textarea>`,
+  ()=>{const c=val('f_c').trim();if(!c)return'Indique le motif.';i.statut='annule';i.commentaire=c},null,'Confirmer l\'annulation');
+}
+function actModifier(i){
+  modal('Modifier – '+esc(benefNom(i.benefId)),`
+    <div class="row"><div><label>Arrivée</label><input type="time" id="f_h1" value="${i.reelDebut||''}"></div><div><label>Départ</label><input type="time" id="f_h2" value="${i.reelFin||''}"></div></div>
+    <div class="row"><div><label>Compteur arrivée</label><input inputmode="numeric" id="f_k1" value="${i.kmArrivee==null?'':i.kmArrivee}"></div><div><label>Compteur départ</label><input inputmode="numeric" id="f_k2" value="${i.kmDepart==null?'':i.kmDepart}"></div></div>
+    <label>Commentaire (obligatoire pour une correction)</label><textarea id="f_c">${esc(i.commentaire)}</textarea>`,
+  ()=>{const h1=val('f_h1'),h2=val('f_h2'),k1=num('f_k1'),k2=num('f_k2'),c=val('f_c').trim();
+    if(!h1||!h2||toMin(h2)<=toMin(h1))return'Vérifie les heures.';
+    if(k1==null||k2==null||k2<k1)return'Vérifie les compteurs.';
+    if(!c)return'Explique la correction dans le commentaire.';
+    Object.assign(i,{reelDebut:h1,reelFin:h2,kmArrivee:k1,kmDepart:k2,commentaire:c,statut:'fait'});});
+}
+function actHors(day){
+  if(!S.benef.length)return toast("Ajoute d'abord un bénéficiaire (onglet Planning).");
+  const dc=dernierCompteur(day);
+  modal('Intervention hors planning',`<div class="mut">${dateLong(day)}</div>
+    <label>Bénéficiaire</label><select id="f_b">${S.benef.map(b=>`<option value="${b.id}">${esc(b.nom)}</option>`).join('')}</select>
+    <div class="row"><div><label>Arrivée</label><input type="time" id="f_h1"></div><div><label>Départ</label><input type="time" id="f_h2"></div></div>
+    <div class="row"><div><label>Compteur arrivée</label><input inputmode="numeric" id="f_k1" value="${dc!=null?dc:''}"></div><div><label>Compteur départ</label><input inputmode="numeric" id="f_k2" value="${dc!=null?dc:''}"></div></div>
+    <label>Pourquoi ? (obligatoire)</label><textarea id="f_c" placeholder="Remplacement d'une collègue, urgence…"></textarea>`,
+  ()=>{const h1=val('f_h1'),h2=val('f_h2'),k1=num('f_k1'),k2=num('f_k2'),c=val('f_c').trim();
+    if(!h1||!h2||toMin(h2)<=toMin(h1))return'Vérifie les heures.';
+    if(k1==null||k2==null||k2<k1)return'Vérifie les compteurs.';
+    if(!c)return'Le motif est obligatoire.';
+    S.inter.push({id:uid(),date:day,benefId:val('f_b'),prevDebut:null,prevFin:null,hors:true,statut:'fait',reelDebut:h1,reelFin:h2,kmArrivee:k1,kmDepart:k2,commentaire:c});});
+}
+
+function actAbsence(){
+  const d0=UI.day;
+  modal('Poser une absence',`
+    <label>Type</label><select id="a_t"><option value="cp">Congés payés</option><option value="maladie">Maladie</option><option value="autre">Absence autorisée (ASA)</option></select>
+    <div class="row"><div><label>Du</label><input type="date" id="a_d" value="${d0}"></div><div><label>Au (inclus)</label><input type="date" id="a_f" value="${d0}"></div></div>
+    <div class="info" id="a_info"></div>
+    <label>Commentaire</label><textarea id="a_c" placeholder="facultatif"></textarea>`,
+  ()=>{const a={id:uid(),type:val('a_t'),debut:val('a_d'),fin:val('a_f'),commentaire:val('a_c').trim()};
+    if(!a.debut||!a.fin||a.fin<a.debut)return'Vérifie les dates.';
+    S.abs=S.abs||[];if(S.abs.some(x=>!(x.fin<a.debut||x.debut>a.fin)))return'Une absence existe déjà sur ces dates.';
+    S.abs.push(a)},
+  ()=>{const d=val('a_d'),f=val('a_f'),t=val('a_t');if(!d||!f||f<d){$('#a_info').textContent='Vérifie les dates.';return}
+    let h=0,x=d;while(x<=f){if(jourTravaille(x)&&!ferie(x))h+=forfaitJour();x=addDays(x,1)}
+    $('#a_info').innerHTML=(t==='cp'?'Décompte : <b>'+joursDecomptes({debut:d,fin:f}).length+' jour(s) ouvré(s)</b><br>':'')+(t==='maladie'?'⚠ 1 jour de carence (non rémunéré) : '+dateLong(d)+'<br>':'')+'Heures comptées : '+'<b>'+fmtH(h)+'</b> ('+fmtH(forfaitJour())+' par jour travaillé)'},'Enregistrer');
+}
+
+/* ---------- Planning : copie du mois précédent, modification ---------- */
+function rangJour(ds){return Math.floor((parse(ds).getDate()-1)/7)} /* 0 = 1er lundi, 1 = 2e lundi… */
+function jourDuRang(ym,wd,k){const[y,m]=ym.split('-').map(Number);const d1=new Date(y,m-1,1);const first=1+((wd-d1.getDay()+7)%7);const d=first+7*k;return d<=new Date(y,m,0).getDate()?ym+'-'+pad(d):null}
+function copierMois(ym){
+  const src=addMonth(ym,-1);
+  const modeles=S.inter.filter(i=>i.date.startsWith(src)&&!i.hors&&!i.ajout&&i.prevDebut);
+  if(!modeles.length)return toast('Aucun planning trouvé en '+monthLabel(src)+'.');
+  const parJour={};modeles.forEach(i=>{(parJour[i.date]=parJour[i.date]||[]).push(i)});
+  const nouv=[],sautes=[];const[y,m]=ym.split('-').map(Number);const nb=new Date(y,m,0).getDate();
+  for(let d=1;d<=nb;d++){const ds=ym+'-'+pad(d),wd=parse(ds).getDay(),k=rangJour(ds);
+    let source=null;for(const kk of [k,k-1,k+1,k-2,k+2,k-3,k+3]){if(kk<0)continue;const sd=jourDuRang(src,wd,kk);if(sd&&parJour[sd]&&!ferie(sd)){source=sd;break}}
+    if(!source)continue;
+    if(ferie(ds)){sautes.push(dateCourt(ds)+' '+ferie(ds));continue}
+    parJour[source].forEach(i=>nouv.push({id:uid(),date:ds,benefId:i.benefId,prevDebut:i.prevDebut,prevFin:i.prevFin,statut:'prevu',reelDebut:null,reelFin:null,kmArrivee:null,kmDepart:null,commentaire:''}));}
+  const deja=S.inter.some(i=>i.date.startsWith(ym)&&!i.hors);
+  const tot=nouv.reduce((t,i)=>t+dureePrev(i),0);
+  modal('Copier le planning de '+monthLabel(src),`<p><b>${nouv.length} interventions</b> seront créées pour ${monthLabel(ym)}, soit <b>${fmtH(tot)}</b> (contrat : ${S.profil.heures} h).</p>
+    <p class="mut">Chaque intervention est recopiée sur le même jour de la semaine (1er lundi → 1er lundi…).${sautes.length?'<br>Fériés sautés : '+sautes.join(', ')+'.':''} Les interventions hors planning ne sont pas copiées.</p>
+    ${deja?'<div class="warnbox">⚠ Ce mois contient déjà des interventions : les nouvelles s\'ajouteront. Utilise « Vider le brouillon » d\'abord si tu veux repartir de zéro.</div>':''}
+    <p class="mut">Tu pourras ensuite modifier ✏️ ou supprimer 🗑 chaque ligne avant de valider.</p>`,
+  ()=>{S.inter.push(...nouv)},null,'Copier');
+}
+function actModifPlan(i){
+  const valide=!!S.valide[i.date.slice(0,7)];
+  modal('Modifier l\'intervention prévue',`
+    <label>Bénéficiaire</label><select id="m_b">${S.benef.map(b=>`<option value="${b.id}" ${b.id===i.benefId?'selected':''}>${esc(b.nom)}</option>`).join('')}</select>
+    <label>Date</label><input type="date" id="m_d" value="${i.date}">
+    <div class="row"><div><label>Début</label><input type="time" id="m_h1" value="${i.prevDebut}"></div><div><label>Fin</label><input type="time" id="m_h2" value="${i.prevFin}"></div></div>
+    ${valide?'<label>Pourquoi ce changement ? (obligatoire, planning validé)</label><textarea id="m_c"></textarea>':''}`,
+  ()=>{const d=val('m_d'),h1=val('m_h1'),h2=val('m_h2');
+    if(!d||!h1||!h2||toMin(h2)<=toMin(h1))return'Vérifie la date et les heures.';
+    let c='';if(valide){c=val('m_c').trim();if(!c)return'Le commentaire est obligatoire.'}
+    Object.assign(i,{benefId:val('m_b'),date:d,prevDebut:h1,prevFin:h2});
+    if(valide){i.commentaire=c;i.modif=true}},null,'Enregistrer');
+}
+
+/* ---------- Panier d'heures complémentaires ---------- */
+const PANIER_PLEIN=600; /* le panier est plein à 10 h */
+function cumulPlus(ym){let t=0,m=ym.slice(0,4)+'-01';while(m<=ym){t+=stats(m).plus;m=addMonth(m,1)}return t}
+function panier(plus,cumul){
+  const f=Math.min(1,plus/PANIER_PLEIN),h=48*f;
+  return`<div class="plus"><div><span>🧺 Panier d'heures<br><span class="mut">complémentaires</span></span><b>${fmtH(plus)}</b>
+    <span class="mut">Cumul de l'année : ${fmtH(cumul)}</span></div>
+   <svg viewBox="0 0 100 90" aria-hidden="true"><defs><clipPath id="pc"><polygon points="13,40 87,40 79,86 21,86"/></clipPath></defs>
+    <path d="M26 40 Q50 2 74 40" fill="none" stroke="#a16207" stroke-width="6" stroke-linecap="round"/>
+    <polygon points="13,40 87,40 79,86 21,86" fill="#fef3c7" stroke="#a16207" stroke-width="3"/>
+    <g clip-path="url(#pc)">${h?`<rect class="rempl" x="0" y="${86-h}" width="100" height="${h}" fill="${f>=1?'#4f46e5':'#818cf8'}"/>`:''}
+     <path d="M30 40 L34 86 M50 40 L50 86 M70 40 L66 86 M15 55 H85 M17 70 H83" stroke="#a16207" stroke-opacity=".45" stroke-width="2.5"/></g>
+    <rect x="8" y="34" width="84" height="10" rx="5" fill="#ca8a04"/></svg></div>`}
+
+/* ---------- Écrans ---------- */
+function header(sub){return`<header class="top">${ICON}<div><h1>Mes Heures</h1><small>${sub||''}</small></div></header>`}
+
+function vInscription(){
+  return`<div class="center logo-big" style="margin:30px 0 10px">${ICON}</div>
+  <h1 class="center" style="margin:0">Mes Heures</h1><p class="center mut">Heures et kilomètres de l'aide à domicile</p>
+  <div class="card"><h2>Inscription</h2>
+  <label>Prénom et nom</label><input id="i_nom" placeholder="Marie Dupont">
+  <label>Heures du contrat par mois</label><input id="i_h" inputmode="decimal" placeholder="115">
+  <label>Jours travaillés dans la semaine</label>${joursHTML([1,2,3,4,5])}
+  <label>Date d'entrée (si arrivée cette année, facultatif)</label><input type="date" id="i_e">
+  <label>Report de congés de l'an dernier (jours, facultatif)</label><input id="i_s" inputmode="decimal" placeholder="0">
+  <div style="height:12px"></div><button class="btn" data-act="inscrire">Créer mon profil</button></div>
+  <div class="card"><p class="mut" style="margin-top:0">Tu veux juste voir à quoi ça ressemble ?</p><button class="btn ghost" data-act="demo">Charger des données de démonstration</button></div>`;
+}
+
+function vAccueil(){
+  const ym=todayStr().slice(0,7),st=stats(ym),day=UI.day,list=interDay(day),k=kmJour(day),m=S.maison[day]||{};
+  const pct=st.objectif?Math.min(100,st.total/st.objectif*100):0;
+  let etat;
+  if(st.ok)etat=`<span class="badge b-ok">✔ À jour</span>`;else etat=`<span class="badge b-ko">En retard de ${fmtH(st.retard)}</span>`;
+  const reste=st.objectif-st.total,Y=Number(ym.slice(0,4)),cg=conges(Y),fe=ferie(day),ab=absenceDe(day);
+  let html=header('Bonjour '+esc(S.profil.nom.split(' ')[0]))+
+  `<div class="card compteur ${st.ok?'ok':'ko'}">
+    <div class="between"><span class="mut">Heures du mois – ${monthLabel(ym)}</span>${etat}</div>
+    <div class="big">${fmtH(st.total)} <span style="font-size:18px;color:var(--mut);font-weight:600">/ ${fmtH(st.objectif)}</span></div>
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="mut">Travaillé ${fmtH(st.real)}${st.cp?' + congés '+fmtH(st.cp):''}${st.fer?' + fériés '+fmtH(st.fer):''}${st.mal?' + maladie '+fmtH(st.mal):''}${st.autre?' + ASA '+fmtH(st.autre):''}</div>${carences(ym).length?`<div class="mut">⚠ Jour de carence (non rémunéré) : ${carences(ym).map(dateCourt).join(', ')}</div>`:''}
+    <div class="mut">Prévu au planning à ce jour : ${fmtH(st.prevDate)} · ${reste>0?'Reste à faire : <b>'+fmtH(reste)+'</b>':'Contrat atteint ✔'}</div>
+    ${panier(st.plus,cumulPlus(ym))}
+    <div class="mut" style="margin-top:8px">Kilomètres professionnels du mois : <b>${fmtKm(kmMois(ym))}</b></div>
+    ${st.prevTot+st.abs<st.c?`<div class="warnbox">⚠ Planning + absences du mois : ${fmtH(st.prevTot+st.abs)} sur ${S.profil.heures} h de contrat.</div>`:''}
+  </div>
+  <div class="card"><div class="between"><h2 style="margin:0">🌴 Mes congés ${Y}</h2><button class="btn sm" data-act="abs">Poser une absence</button></div>
+    <div class="tot" style="margin-top:10px"><div><span class="mut">Restants</span><b>${nj(cg.restant)} j</b></div><div><span class="mut">Pris</span><b>${cg.pris} j</b></div>
+    <div><span class="mut">Droit ${Y} (5 × ${joursP().length} j)</span><b>${nj(cg.droit)} j</b></div><div><span class="mut">Fractionnement</span><b>+${cg.bonus} j</b></div></div>
+    <div class="mut" style="margin-top:6px">${cg.report?'Report : '+nj(cg.report)+' j · ':''}${cg.fen} j posés en janv.–mars / oct.–déc.${cg.bonus<2?' (jour suivant à '+(cg.bonus?7:5)+' j)':''}</div></div>
+  <div class="card">
+   <div class="daynav"><button class="btn ghost" data-act="dprev">◀</button><b>${dateLong(day)}</b><button class="btn ghost" data-act="dnext">▶</button></div>
+   ${day!==todayStr()?`<button class="btn ghost sm" data-act="dtoday" style="margin-bottom:10px">Revenir à aujourd'hui</button>`:''}
+   ${fe?`<div class="banner fer">🎉 Jour férié – ${fe}</div>`:''}${ab?`<div class="banner abs">🌴 ${ABS[ab.type]}${ab.commentaire?' – '+esc(ab.commentaire):''}</div>`:''}
+   <label>🏠 Compteur au départ de la maison</label><input inputmode="numeric" id="m_dep" data-maison="dep" value="${m.dep==null?'':m.dep}" placeholder="facultatif">
+   <div style="height:10px"></div>`;
+  if(!list.length){
+    const next=S.inter.filter(i=>i.date>day&&i.statut==='prevu').sort((a,b)=>a.date.localeCompare(b.date))[0];
+    html+=`<p class="mut center">Aucune intervention ce jour.</p>${next?`<button class="btn ghost" data-act="goto" data-d="${next.date}">Prochaine : ${dateLong(next.date)}</button>`:''}`;
+  }
+  list.forEach(i=>{
+    const leg=k.legs[i.id];const b=esc(benefNom(i.benefId));
+    const absent=ab&&i.statut==='prevu';
+    const badge=absent?'<span class="badge b-abs">Absence</span>':{prevu:'<span class="badge">Prévu</span>',encours:'<span class="badge b-run">En cours</span>',fait:'<span class="badge b-ok">Fait</span>',annule:'<span class="badge b-ko">Annulé</span>'}[i.statut]+(i.hors?' <span class="badge b-hors">Hors planning</span>':'')+(i.ajout?' <span class="badge b-hors">Ajout</span>':'')+(i.modif?' <span class="badge b-hors">Modifié</span>':'');
+    html+=`<div class="inter ${i.statut}"><div class="between"><span class="nom">${b}</span>${badge}</div>
+      <div class="mut">${i.hors?'Non prévue':'Prévu '+i.prevDebut+' – '+i.prevFin}${i.reelDebut?' · Réel '+i.reelDebut+' – '+(i.reelFin||'…'):''}${i.statut==='fait'?' · <b>'+fmtH(dureeReel(i))+'</b>':''}</div>
+      ${i.kmArrivee!=null?`<div class="km">🚗 Compteur ${i.kmArrivee}${i.kmDepart!=null?' → '+i.kmDepart:''}${leg&&leg.trajet!=null?' · trajet '+fmtKm(leg.trajet):''}${leg&&leg.pendant?' · pendant '+fmtKm(leg.pendant):''}</div>`:''}
+      ${i.commentaire?`<div class="com">💬 ${esc(i.commentaire)}</div>`:''}
+      <div class="acts">${
+        absent?'':i.statut==='prevu'?`<button class="btn" data-act="arr" data-id="${i.id}">Arrivée</button><button class="btn red" data-act="ann" data-id="${i.id}">Annuler</button>`:
+        i.statut==='encours'?`<button class="btn" data-act="dep" data-id="${i.id}">Départ</button>`:
+        i.statut==='fait'?`<button class="btn ghost sm" data-act="mod" data-id="${i.id}">Corriger</button>`:''}</div></div>`;
+  });
+  html+=`<button class="btn ghost" data-act="hors">+ Intervention hors planning</button>
+   <label>🏠 Compteur au retour à la maison</label><input inputmode="numeric" id="m_ret" data-maison="ret" value="${m.ret==null?'':m.ret}" placeholder="facultatif">
+   <div class="info">Km professionnels du jour : <b>${fmtKm(k.total)}</b>${k.voiture!=null?' · total voiture : '+fmtKm(k.voiture):''}${S.profil.domicile?'':'<br><span class="mut">Trajets maison ↔ bénéficiaires non comptés (Réglages).</span>'}</div>
+  </div>`;
+  return html;
+}
+
+function vPlanning(){
+  const ym=UI.month,list=interMonth(ym).filter(i=>!i.hors),st=stats(ym),val_=S.valide[ym];
+  let html=header('Planning')+`<div class="card"><div class="daynav"><button class="btn ghost" data-act="mprev">◀</button><b>${monthLabel(ym)}</b><button class="btn ghost" data-act="mnext">▶</button></div>
+   <div class="between"><span>Total prévu : <b>${fmtH(st.prevTot)}</b> / ${S.profil.heures} h</span>${val_?'<span class="badge b-ok">Validé</span>':'<span class="badge b-run">Brouillon</span>'}</div>
+   ${st.abs?`<div class="mut">+ congés ${fmtH(st.cp)} · fériés ${fmtH(st.fer)} · maladie ${fmtH(st.mal)} · ASA ${fmtH(st.autre)}</div>`:''}
+   ${st.prevTot+st.abs<st.c?`<div class="warnbox">⚠ Il manque ${fmtH(st.c-st.prevTot-st.abs)} pour couvrir le contrat.</div>`:''}
+   ${(()=>{const f=Object.entries(feries(Number(ym.slice(0,4)))).filter(([d])=>d.startsWith(ym));return f.length?`<div class="banner fer" style="margin-top:8px">🎉 Férié${f.length>1?'s':''} : ${f.map(([d,n])=>dateCourt(d)+' '+n).join(' · ')}</div>`:''})()}
+   ${val_?`<p class="mut">Validé le ${dateLong(val_)}. Toute modification demande maintenant un commentaire.</p>`:`<div style="height:10px"></div><button class="btn ghost" data-act="pcopy">📋 Copier le planning de ${MOIS[parse(addMonth(ym,-1)+'-01').getMonth()]}</button><div style="height:8px"></div><button class="btn" data-act="valider">Valider le planning du mois</button>${list.length?'<div style="height:8px"></div><button class="btn red sm" data-act="pvider">Vider le brouillon du mois</button>':''}`}
+  </div>
+  <div class="card"><h2>Ajouter au planning</h2>
+   ${S.benef.length?`<label>Bénéficiaire</label><select id="p_b">${S.benef.map(b=>`<option value="${b.id}">${esc(b.nom)}</option>`).join('')}</select>
+   <label>Date</label><input type="date" id="p_d" value="${ym===todayStr().slice(0,7)?todayStr():ym+'-01'}">
+   <div class="row"><div><label>Début</label><input type="time" id="p_h1" value="08:00"></div><div><label>Fin</label><input type="time" id="p_h2" value="10:00"></div></div>
+   <label style="display:flex;gap:8px;align-items:center;color:var(--txt)"><input type="checkbox" id="p_rep" style="width:auto"> Répéter chaque semaine jusqu'à la fin du mois (fériés sautés)</label>
+   <div style="height:8px"></div><button class="btn" data-act="padd">Ajouter</button>`:`<p class="mut">Ajoute d'abord un bénéficiaire ci-dessous.</p>`}
+  </div>
+  <div class="card"><h2>Interventions prévues (${list.length})</h2>`;
+  if(!list.length)html+='<p class="mut">Rien de prévu pour ce mois.</p>';
+  list.forEach(i=>{const ab=i.statut==='prevu'&&absenceDe(i.date);
+    html+=`<div class="plan-line"><span class="d">${dateCourt(i.date)}</span><span class="x">${i.prevDebut}–${i.prevFin} · ${esc(benefNom(i.benefId))} ${ferie(i.date)?'<span class="badge b-fer">Férié</span> ':''}${ab?'<span class="badge b-abs">Absence</span>':i.statut==='annule'?'<span class="badge b-ko">Annulé</span>':i.statut==='fait'?'<span class="badge b-ok">Fait</span>':''}${i.ajout?' <span class="badge b-hors">Ajout</span>':''}${i.modif?' <span class="badge b-hors">Modifié</span>':''}</span>${i.statut==='prevu'&&!ab?`<button data-act="pmod" data-id="${i.id}" title="Modifier">✏️</button><button data-act="pdel" data-id="${i.id}" title="Supprimer">🗑</button>`:''}</div>`});
+  const Y=ym.slice(0,4),absY=(S.abs||[]).filter(a=>a.debut.startsWith(Y)||a.fin.startsWith(Y)).sort((a,b)=>a.debut.localeCompare(b.debut));
+  html+=`</div><div class="card"><div class="between"><h2 style="margin:0">🌴 Absences ${Y}</h2><button class="btn sm" data-act="abs">Poser</button></div><div style="height:6px"></div>`;
+  if(!absY.length)html+='<p class="mut">Aucune absence posée.</p>';
+  absY.forEach(a=>{html+=`<div class="plan-line"><span class="x"><span class="badge ${a.type==='cp'?'b-abs':'b-run'}">${ABS[a.type]}</span> ${dateCourt(a.debut)} ${MOIS[parse(a.debut).getMonth()].slice(0,4)}. → ${dateCourt(a.fin)} ${MOIS[parse(a.fin).getMonth()].slice(0,4)}.${a.type==='cp'?' · <b>'+joursDecomptes(a).length+' j</b>':''}${a.commentaire?'<br><span class="mut">'+esc(a.commentaire)+'</span>':''}</span><button data-act="adel" data-id="${a.id}" title="Supprimer">🗑</button></div>`});
+  html+=`</div><div class="card"><h2>Bénéficiaires</h2>`;
+  S.benef.forEach(b=>{html+=`<div class="plan-line"><span class="x"><b>${esc(b.nom)}</b> <span class="mut">${esc(b.adresse||'')}</span></span></div>`});
+  html+=`<label>Nom</label><input id="b_n" placeholder="Mme Durand"><label>Commune / adresse</label><input id="b_a" placeholder="facultatif"><div style="height:8px"></div><button class="btn ghost" data-act="badd">+ Ajouter le bénéficiaire</button></div>`;
+  return html;
+}
+
+function vRecap(){
+  const ym=UI.month,list=interMonth(ym),st=stats(ym),km=kmMois(ym),taux=Number(S.profil.taux)||0;
+  const kmByDay={};
+  let html=header('Récapitulatif')+`<div class="card"><div class="daynav"><button class="btn ghost" data-act="mprev">◀</button><b>${monthLabel(ym)}</b><button class="btn ghost" data-act="mnext">▶</button></div>
+  <div class="tot"><div><span class="mut">Contrat</span><b>${S.profil.heures} h</b></div><div><span class="mut">Prévu au planning</span><b>${fmtH(st.prevTot)}</b></div>
+  <div><span class="mut">Travaillé</span><b>${fmtH(st.real)}</b></div><div><span class="mut">Congés payés</span><b>${fmtH(st.cp)}</b></div>
+  <div><span class="mut">Jours fériés</span><b>${fmtH(st.fer)}</b></div><div><span class="mut">Maladie${carences(ym).length?' (dont '+carences(ym).length+' j carence)':''}</span><b>${fmtH(st.mal)}</b></div><div><span class="mut">Absences autorisées</span><b>${fmtH(st.autre)}</b></div><div><span class="mut">Heures d'une journée</span><b>${fmtH(forfaitJour())}</b></div>
+  <div><span class="mut">Total du mois</span><b style="color:${st.total>=st.objectif?'var(--ok)':'var(--ko)'}">${fmtH(st.total)}</b></div><div><span class="mut">Écart / contrat</span><b>${fmtH(st.total-st.c)}</b></div>
+  <div><span class="mut">Km professionnels</span><b>${fmtKm(km)}</b></div><div><span class="mut">Indemnité km</span><b>${taux?(km*taux).toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'–'}</b></div></div>
+  ${panier(st.plus,cumulPlus(ym))}<div style="height:10px"></div><button class="btn ghost" data-act="csv" data-mode="fichier">📄 Télécharger le tableau (LibreOffice / Excel)</button><div style="height:8px"></div><button class="btn ghost" data-act="csv">📋 Copier le tableau</button></div>
+  <div class="card" style="overflow-x:auto"><table><tr><th>Date</th><th>Bénéf.</th><th>Prévu</th><th>Réel</th><th>Durée</th><th>Km</th></tr>`;
+  list.forEach(i=>{if(!kmByDay[i.date])kmByDay[i.date]=kmJour(i.date);const l=kmByDay[i.date].legs[i.id];const kmi=l?(l.trajet||0)+l.pendant:0;
+    const ab=i.statut==='prevu'&&absenceDe(i.date),fe=ferie(i.date);
+    html+=`<tr style="${i.statut==='annule'?'color:#991b1b':ab?'color:#1e40af':''}"><td>${dateCourt(i.date)}${fe?' 🎉':''}</td><td>${esc(benefNom(i.benefId))}</td><td>${i.hors?'—':i.prevDebut+'–'+i.prevFin}</td><td>${ab?ABS[ab.type]:i.statut==='annule'?'Annulé':i.reelDebut?i.reelDebut+'–'+(i.reelFin||'…'):''}</td><td>${i.statut==='fait'?fmtH(dureeReel(i)):''}</td><td>${kmi?fmtKm(kmi):''}</td></tr>${i.commentaire?`<tr><td></td><td colspan="5" style="color:#92400e">💬 ${esc(i.commentaire)}</td></tr>`:''}`});
+  html+='</table></div>';
+  return html;
+}
+
+function vReglages(){
+  const p=S.profil;
+  return header('Réglages')+`<div class="card"><h2>Mon profil</h2>
+  <label>Prénom et nom</label><input id="r_nom" value="${esc(p.nom)}">
+  <label>Heures du contrat par mois</label><input id="r_h" inputmode="decimal" value="${p.heures}">
+  <label>Jours travaillés dans la semaine</label>${joursHTML(joursP())}
+  <div class="info">Heures d'une journée (calculées) : <b>${fmtH(forfaitJour())}</b> = ${p.heures} h ÷ (${joursP().length} j × 52 ÷ 12)</div>
+  <label>Date d'entrée (si arrivée en cours d'année, facultatif)</label><input type="date" id="r_e" value="${p.entree||''}">
+  <label>Report de congés de l'an dernier (jours, si autorisé)</label><input id="r_s" inputmode="decimal" value="${p.report||0}">
+  <div class="info">Droit à congés ${new Date().getFullYear()} : <b>${nj(droitConges(new Date().getFullYear()))} j</b> = 5 × ${joursP().length} jours par semaine${p.entree?' (au prorata)':''}</div>
+  <label>Indemnité kilométrique (€ par km, facultatif)</label><input id="r_t" inputmode="decimal" value="${p.taux||''}" placeholder="ex. 0,40">
+  <label style="display:flex;gap:8px;align-items:center;color:var(--txt)"><input type="checkbox" id="r_dom" style="width:auto" ${p.domicile?'checked':''}> Compter les trajets maison ↔ 1er et dernier bénéficiaire</label>
+  <div style="height:10px"></div><button class="btn" data-act="rsave">Enregistrer</button></div>
+  <div class="card"><h2>Données</h2><p class="mut">Les données restent sur ce téléphone. Sauvegarde régulièrement (une fois par mois au moins), et garde le fichier en lieu sûr (mail, Drive…).</p>
+  <button class="btn" data-act="backup">💾 Sauvegarder dans un fichier</button><div style="height:8px"></div>
+  <button class="btn ghost" data-act="restore">📂 Restaurer une sauvegarde</button><input type="file" id="f_restore" accept=".json,application/json" style="display:none"><div style="height:8px"></div>
+  ${S.derniereSauvegarde?'<p class="mut">Dernière sauvegarde : '+dateLong(S.derniereSauvegarde)+'</p>':'<p class="mut">⚠ Aucune sauvegarde faite pour l\'instant.</p>'}
+  ${S.demo?'<button class="btn ghost" data-act="demo">Recharger les données de démo</button><div style="height:8px"></div>':''}
+  <button class="btn red" data-act="reset">Tout effacer</button></div>`;
+}
+
+const NAV=[['accueil','🏠','Accueil'],['planning','📅','Planning'],['recap','📊','Récap'],['reglages','⚙️','Réglages']];
+function render(){
+  const app=$('#app'),nav=$('#nav');
+  if(!S.profil){app.innerHTML=vInscription();nav.style.display='none';return}
+  nav.style.display='flex';
+  nav.innerHTML=NAV.map(([k,ic,l])=>`<button class="${UI.tab===k?'on':''}" data-tab="${k}"><span>${ic}</span>${l}</button>`).join('');
+  app.innerHTML={accueil:vAccueil,planning:vPlanning,recap:vRecap,reglages:vReglages}[UI.tab]();
+}
+
+/* ---------- Démo ---------- */
+function demo(){
+  const t=todayStr(),ym=t.slice(0,7),[y,mo]=ym.split('-').map(Number);
+  S=blank();S.profil={nom:'Marie Dupont',heures:104,taux:0.4,domicile:false,jours:[1,2,3,4,5],report:2};
+  S.abs=[{id:uid(),type:'cp',debut:y+'-02-09',fin:y+'-02-13',commentaire:'Vacances d\'hiver'},{id:uid(),type:'cp',debut:ym+'-09',fin:ym+'-10',commentaire:'Pont du 11 novembre'},{id:uid(),type:'maladie',debut:ym+'-16',fin:ym+'-17',commentaire:'Arrêt de travail'}];
+  const A={id:uid(),nom:'Mme Martin',adresse:'Saint-Clair'},B={id:uid(),nom:'M. Bernard',adresse:'Lavit'},C={id:uid(),nom:'Mme Petit',adresse:"Valence d'Agen"};
+  S.benef=[A,B,C];
+  /* mois précédent : complet, avec des samedis en plus (remplit le panier) */
+  let odo=83900;const pm=addMonth(ym,-1),[py,pmo]=pm.split('-').map(Number),pnb=new Date(py,pmo,0).getDate();
+  for(let d=1;d<=pnb;d++){const ds=pm+'-'+pad(d),wd=parse(ds).getDay();
+    if(wd===6&&d>3){odo+=3;S.inter.push({id:uid(),date:ds,benefId:A.id,prevDebut:null,prevFin:null,hors:true,statut:'fait',reelDebut:'09:00',reelFin:'10:30',kmArrivee:odo,kmDepart:odo,commentaire:'Renfort du samedi demandé par le service'});odo+=3;continue}
+    if(wd===0||wd===6||ferie(ds))continue;
+    const plan=[[A,'08:00','10:00'],[B,'10:30','12:00']];if(wd%2===1)plan.push([C,'14:00','16:30']);
+    S.maison[ds]={dep:odo,ret:null};const dist=[3,8,12];
+    plan.forEach(([b,s,e],k)=>{odo+=dist[k];S.inter.push({id:uid(),date:ds,benefId:b.id,prevDebut:s,prevFin:e,statut:'fait',reelDebut:s,reelFin:e,kmArrivee:odo,kmDepart:odo,commentaire:''})});
+    odo+=9;S.maison[ds].ret=odo;odo+=(d*5)%11;}
+  S.valide[pm]=pm+'-01';odo=Math.max(odo,84520);
+  let n=0,cDone=0,annule=false,prolong=false,horsFait=false;const nbj=new Date(y,mo,0).getDate();
+  for(let d=1;d<=nbj;d++){
+    const ds=ym+'-'+pad(d),wd=parse(ds).getDay();
+    if(wd===6&&!horsFait&&ds<t&&d>7){horsFait=true;odo+=3;S.inter.push({id:uid(),date:ds,benefId:A.id,prevDebut:null,prevFin:null,hors:true,statut:'fait',reelDebut:'10:00',reelFin:'11:00',kmArrivee:odo,kmDepart:odo,commentaire:"Remplacement d'une collègue malade (toilette du samedi)"});odo+=3;continue}
+    if(wd===0||wd===6||ferie(ds))continue;
+    const plan=[[A,'08:00','10:00'],[B,'10:30','12:00']];if(wd%2===1)plan.push([C,'14:00','16:30']);
+    const items=plan.map(([b,s,e])=>({id:uid(),date:ds,benefId:b.id,prevDebut:s,prevFin:e,statut:'prevu',reelDebut:null,reelFin:null,kmArrivee:null,kmDepart:null,commentaire:''}));
+    S.inter.push(...items);
+    if(ds<t&&!absenceDe(ds)){
+      n++;S.maison[ds]={dep:odo,ret:null};const dist=[3,8,12];
+      items.forEach((it,k)=>{
+        if(it.benefId===C.id){cDone++;if(cDone===3&&!annule){annule=true;it.statut='annule';it.commentaire='Mme Petit hospitalisée, famille a prévenu le matin';return}}
+        let dd=dist[k],pendant=0;it.statut='fait';it.reelDebut=it.prevDebut;it.reelFin=it.prevFin;
+        if(n===3&&k===0){it.reelDebut='08:20';it.reelFin='10:20';it.commentaire='Arrivée en retard (bouchon à Saint-Clair), 20 min rattrapées en fin'}
+        if(n===5&&k===1){dd=11;it.commentaire='Déviation route de Lavit (travaux)'}
+        if(it.benefId===C.id&&cDone===5&&!prolong){prolong=true;it.reelFin='17:00';pendant=4;it.commentaire='Accompagnement à la pharmacie, départ 30 min plus tard'}
+        odo+=dd;it.kmArrivee=odo;odo+=pendant;it.kmDepart=odo;
+      });
+      odo+=9;S.maison[ds].ret=odo;odo+=(d*7)%13;
+    }
+  }
+  S.valide[ym]=ym+'-01';S.demo=true;UI.tab='accueil';UI.day=t;UI.month=ym;save();render();
+}
+
+/* ---------- Événements ---------- */
+document.addEventListener('click',e=>{
+  const tb=e.target.closest('[data-tab]');if(tb){UI.tab=tb.dataset.tab;render();window.scrollTo(0,0);return}
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act,i=el.dataset.id?S.inter.find(x=>x.id===el.dataset.id):null;
+  switch(a){
+    case'inscrire':{const n=val('i_nom').trim(),h=num('i_h');if(!n||!h){toast('Indique ton nom et tes heures de contrat.');return}S.profil={nom:n,heures:h,taux:0,domicile:false,jours:lireJours(),report:num('i_s')||0,entree:val('i_e')||''};if(!S.profil.jours.length){S.profil=null;toast('Coche au moins un jour travaillé.');return}save();render();break}
+    case'demo':demo();break;
+    case'arr':actArrivee(i);break;case'dep':actDepart(i);break;case'ann':actAnnuler(i);break;case'mod':actModifier(i);break;
+    case'hors':actHors(UI.day);break;
+    case'dprev':UI.day=addDays(UI.day,-1);render();break;case'dnext':UI.day=addDays(UI.day,1);render();break;
+    case'dtoday':UI.day=todayStr();render();break;case'goto':UI.day=el.dataset.d;render();break;
+    case'mprev':UI.month=addMonth(UI.month,-1);render();break;case'mnext':UI.month=addMonth(UI.month,1);render();break;
+    case'valider':modal('Valider le planning',`<p>Après validation, chaque ajout ou suppression demandera un commentaire.</p>`,()=>{S.valide[UI.month]=todayStr()},null,'Valider');break;
+    case'badd':{const n=val('b_n').trim();if(!n){toast('Indique le nom.');return}S.benef.push({id:uid(),nom:n,adresse:val('b_a').trim()});save();render();break}
+    case'padd':{
+      const b=val('p_b'),d=val('p_d'),h1=val('p_h1'),h2=val('p_h2'),rep=document.getElementById('p_rep').checked;
+      if(!d||!h1||!h2||toMin(h2)<=toMin(h1)){toast('Vérifie la date et les heures.');return}
+      const dates=[d];let saut=[];if(rep){let x=addDays(d,7);while(x.slice(0,7)===d.slice(0,7)){if(ferie(x))saut.push(dateCourt(x)+' '+ferie(x));else dates.push(x);x=addDays(x,7)}}
+      const info=saut.length?'Férié sauté automatiquement : '+saut.join(', ')+'.':'';
+      const add=c=>dates.forEach(dt=>S.inter.push({id:uid(),date:dt,benefId:b,prevDebut:h1,prevFin:h2,statut:'prevu',reelDebut:null,reelFin:null,kmArrivee:null,kmDepart:null,commentaire:c||'',ajout:!!c}));
+      if(S.valide[d.slice(0,7)])modal('Modification du planning validé',`<p>${dates.length} intervention(s) à ajouter${info?' ('+info+')':''} chez ${esc(benefNom(b))}.</p><label>Pourquoi ce changement ? (obligatoire)</label><textarea id="f_c"></textarea>`,()=>{const c=val('f_c').trim();if(!c)return'Le commentaire est obligatoire.';add(c)});
+      else{add('');save();render();if(info)toast(info)}
+      break}
+    case'abs':actAbsence();break;
+    case'pcopy':copierMois(UI.month);break;
+    case'pmod':actModifPlan(i);break;
+    case'pvider':modal('Vider le brouillon ?',`<p>Les interventions prévues de ${monthLabel(UI.month)} non réalisées seront supprimées.</p>`,()=>{S.inter=S.inter.filter(x=>!(x.date.startsWith(UI.month)&&x.statut==='prevu'&&!x.hors))},null,'Vider');break;
+    case'adel':{const ab=S.abs.find(x=>x.id===el.dataset.id);modal('Supprimer l\'absence ?',`<p>${ABS[ab.type]} du ${dateLong(ab.debut)} au ${dateLong(ab.fin)}.</p>`,()=>{S.abs=S.abs.filter(x=>x!==ab)},null,'Supprimer');break}
+    case'pdel':
+      if(S.valide[i.date.slice(0,7)])actAnnuler(i);
+      else{S.inter=S.inter.filter(x=>x!==i);save();render()}
+      break;
+    case'rsave':{const h=num('r_h');if(!val('r_nom').trim()||!h){toast('Nom et heures obligatoires.');return}
+      const jr=lireJours();if(!jr.length){toast('Coche au moins un jour travaillé.');return}
+      Object.assign(S.profil,{jours:jr,report:num('r_s')||0,entree:val('r_e')||'',nom:val('r_nom').trim(),heures:h,taux:num('r_t')||0,domicile:document.getElementById('r_dom').checked});save();render();toast('Réglages enregistrés.');break}
+    case'reset':modal('Tout effacer ?','<p>Toutes les données de ce téléphone seront supprimées.</p>',()=>{S=blank();UI.tab='accueil'},null,'Effacer');break;
+    case'backup':{const d=todayStr();S.derniereSauvegarde=d;save();telecharger(JSON.stringify(S,null,1),'mes-heures-sauvegarde-'+d+'.json','application/json');render();break}
+    case'restore':document.getElementById('f_restore').click();break;
+    case'csv':{
+      const rows=[['Date','Bénéficiaire','Prévu début','Prévu fin','Réel début','Réel fin','Durée (h)','Statut','Km','Commentaire']];const cache={};
+      interMonth(UI.month).forEach(i=>{if(!cache[i.date])cache[i.date]=kmJour(i.date);const l=cache[i.date].legs[i.id];
+        rows.push([i.date,benefNom(i.benefId),i.prevDebut||'',i.prevFin||'',i.reelDebut||'',i.reelFin||'',(dureeReel(i)/60).toFixed(2).replace('.',','),i.hors?'hors planning':(i.statut==='prevu'&&absenceDe(i.date))?ABS[absenceDe(i.date).type]:i.statut,l?String((l.trajet||0)+l.pendant).replace('.',','):'',i.commentaire||''])});
+      if(el.dataset.mode==='fichier'){const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');telecharger(csv,'mes-heures-'+UI.month+'.csv','text/csv');break}
+      const txt=rows.map(r=>r.join('\t')).join('\n');
+      try{navigator.clipboard.writeText(txt).then(()=>toast('Tableau copié ✔ Colle-le dans LibreOffice Calc.'),()=>toast('Copie refusée par le navigateur.'))}catch(err){toast('Copie impossible ici.')}
+      break}
+  }
+});
+document.addEventListener('change',e=>{
+  const k=e.target.dataset&&e.target.dataset.maison;if(!k)return;
+  const v=e.target.value.replace(',','.').trim();if(!S.maison[UI.day])S.maison[UI.day]={dep:null,ret:null};
+  S.maison[UI.day][k]=v===''?null:Number(v);save();render();
+});
+function telecharger(txt,nom,type){
+  try{const b=new Blob([txt],{type}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=nom;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);toast('Fichier « '+nom+' » enregistré dans tes téléchargements.')}
+  catch(e){toast('Téléchargement impossible ici (fonctionne dans l\'appli installée).')}}
+document.addEventListener('change',e=>{
+  if(e.target.id!=='f_restore'||!e.target.files[0])return;
+  const r=new FileReader();r.onload=()=>{let d;try{d=JSON.parse(r.result)}catch(x){toast('Ce fichier n\'est pas une sauvegarde valide.');return}
+    if(!d||!d.profil||!Array.isArray(d.inter)){toast('Ce fichier n\'est pas une sauvegarde Mes Heures.');return}
+    modal('Restaurer la sauvegarde ?',`<p>Profil : <b>${esc(d.profil.nom)}</b> · ${d.inter.length} interventions.</p><div class="warnbox">⚠ Les données actuelles de ce téléphone seront remplacées.</div>`,()=>{S=Object.assign(blank(),d);UI.tab='accueil'},null,'Restaurer')};
+  r.readAsText(e.target.files[0]);e.target.value='';
+});
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+render();
+</script>
+</body>
+</html>

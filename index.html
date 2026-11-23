@@ -323,6 +323,8 @@ function actAbsence(){
   ()=>{const a={id:uid(),type:val('a_t'),debut:val('a_d'),fin:val('a_f'),commentaire:val('a_c').trim()};
     if(!a.debut||!a.fin||a.fin<a.debut)return'Vérifie les dates.';
     S.abs=S.abs||[];if(S.abs.some(x=>!(x.fin<a.debut||x.debut>a.fin)))return'Une absence existe déjà sur ces dates.';
+    const conf=conflitsSur(a.debut,a.fin);
+    if(conf.length){setTimeout(()=>confirmerConflits(conf,a),50);return true}
     S.abs.push(a)},
   ()=>{const d=val('a_d'),f=val('a_f'),t=val('a_t');if(!d||!f||f<d){$('#a_info').textContent='Vérifie les dates.';return}
     let h=0,x=d;while(x<=f){if(jourTravaille(x)&&!ferie(x))h+=forfaitJour();x=addDays(x,1)}
@@ -379,6 +381,21 @@ function panier(plus,cumul){
      <path d="M30 40 L34 86 M50 40 L50 86 M70 40 L66 86 M15 55 H85 M17 70 H83" stroke="#a16207" stroke-opacity=".45" stroke-width="2.5"/></g>
     <rect x="8" y="34" width="84" height="10" rx="5" fill="#ca8a04"/></svg></div>`}
 
+/* ---------- Conflits absence / heures validées ---------- */
+function remettrePrevu(i){
+  if(i.hors){S.inter=S.inter.filter(x=>x!==i);return}
+  Object.assign(i,{statut:'prevu',reelDebut:null,reelFin:null,kmArrivee:null,kmDepart:null,commentaire:''});
+}
+function conflitsSur(d,f){return S.inter.filter(i=>i.date>=d&&i.date<=f&&(i.statut==='fait'||i.statut==='encours'))}
+function joursEnConflit(){return [...new Set(S.inter.filter(i=>(i.statut==='fait'||i.statut==='encours')&&absenceDe(i.date)).map(i=>i.date))].sort()}
+function confirmerConflits(conf,abs){
+  const h=conf.reduce((t,i)=>t+dureeReel(i),0);
+  modal('⚠ Heures déjà validées',`<p><b>${conf.length} intervention(s)</b> déjà validée(s) sur ${abs?'ces dates':'des jours d\'absence'} (${fmtH(h)}) :</p>
+    <div class="mut">${conf.map(i=>dateCourt(i.date)+' · '+esc(benefNom(i.benefId))+(i.reelDebut?' '+i.reelDebut+'–'+(i.reelFin||'…'):'')).join('<br>')}</div>
+    <p>${abs?'Pour poser l\'absence, ':'Pour corriger, '}elles vont être <b>annulées</b> : heures réelles et kilomètres effacés, elles passent en « Absence ». Seule l'absence comptera.</p>`,
+  ()=>{conf.forEach(remettrePrevu);if(abs)S.abs.push(abs)},null,abs?'Annuler ces heures et poser l\'absence':'Annuler ces heures');
+}
+
 /* ---------- Écrans ---------- */
 function header(sub){return`<header class="top">${ICON}<div><h1>Mes Heures</h1><small>${sub||''}</small></div></header>`}
 
@@ -402,6 +419,7 @@ function vAccueil(){
   if(st.ok)etat=`<span class="badge b-ok">✔ À jour</span>`;else etat=`<span class="badge b-ko">En retard de ${fmtH(st.retard)}</span>`;
   const reste=st.objectif-st.total,Y=Number(ym.slice(0,4)),cg=conges(Y),fe=ferie(day),ab=absenceDe(day);
   let html=header('Bonjour '+esc(S.profil.nom.split(' ')[0]))+
+  (()=>{const c=joursEnConflit();return c.length?`<div class="warnbox" style="margin-bottom:12px"><b>⚠ Absence + heures validées le même jour</b><br>${c.map(dateLong).join(', ')} : ces jours sont comptés deux fois.<div style="height:8px"></div><button class="btn sm" data-act="fixconf">Corriger</button></div>`:''})()+
   `<div class="card compteur ${st.ok?'ok':'ko'}">
     <div class="between"><span class="mut">Heures du mois – ${monthLabel(ym)}</span>${etat}</div>
     <div class="big">${fmtH(st.total)} <span style="font-size:18px;color:var(--mut);font-weight:600">/ ${fmtH(st.objectif)}</span></div>
@@ -437,7 +455,7 @@ function vAccueil(){
       <div class="acts">${
         absent?'':i.statut==='prevu'?`<button class="btn" data-act="arr" data-id="${i.id}">Arrivée</button><button class="btn red" data-act="ann" data-id="${i.id}">Annuler</button>`:
         i.statut==='encours'?`<button class="btn" data-act="dep" data-id="${i.id}">Départ</button>`:
-        i.statut==='fait'?`<button class="btn ghost sm" data-act="mod" data-id="${i.id}">Corriger</button>`:''}</div></div>`;
+        i.statut==='fait'?`<button class="btn ghost sm" data-act="mod" data-id="${i.id}">Corriger</button><button class="btn red sm" data-act="reprev" data-id="${i.id}">${i.hors?'Supprimer':'Remettre en prévu'}</button>`:''}</div></div>`;
   });
   html+=`<button class="btn ghost" data-act="hors">+ Intervention hors planning</button>
    <label>🏠 Compteur au retour à la maison</label><input inputmode="numeric" id="m_ret" data-maison="ret" value="${m.ret==null?'':m.ret}" placeholder="facultatif">
@@ -574,6 +592,8 @@ document.addEventListener('click',e=>{
     case'inscrire':{const n=val('i_nom').trim(),h=num('i_h');if(!n||!h){toast('Indique ton nom et tes heures de contrat.');return}S.profil={nom:n,heures:h,taux:0,domicile:false,jours:lireJours(),report:num('i_s')||0,entree:val('i_e')||''};if(!S.profil.jours.length){S.profil=null;toast('Coche au moins un jour travaillé.');return}save();render();break}
     case'demo':demo();break;
     case'arr':actArrivee(i);break;case'dep':actDepart(i);break;case'ann':actAnnuler(i);break;case'mod':actModifier(i);break;
+    case'reprev':modal(i.hors?'Supprimer l\'intervention ?':'Remettre en prévu ?',`<p>${esc(benefNom(i.benefId))} · ${dateLong(i.date)}${i.reelDebut?' · '+i.reelDebut+' – '+i.reelFin:''}</p><p class="mut">${i.hors?'Cette intervention hors planning sera supprimée.':'Les heures réelles et les kilomètres saisis seront effacés. L\'intervention redevient « prévue ».'}</p>`,()=>{remettrePrevu(i)},null,i.hors?'Supprimer':'Remettre en prévu');break;
+    case'fixconf':{const conf=S.inter.filter(x=>(x.statut==='fait'||x.statut==='encours')&&absenceDe(x.date));confirmerConflits(conf,null);break}
     case'hors':actHors(UI.day);break;
     case'dprev':UI.day=addDays(UI.day,-1);render();break;case'dnext':UI.day=addDays(UI.day,1);render();break;
     case'dtoday':UI.day=todayStr();render();break;case'goto':UI.day=el.dataset.d;render();break;

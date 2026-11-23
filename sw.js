@@ -2,7 +2,7 @@
    En ligne : on prend toujours la dernière version sur GitHub (et on la garde en cache).
    Hors ligne : on sert la copie gardée sur le téléphone.
    Les données de l'aide (localStorage) ne sont jamais touchées par ce fichier. */
-const CACHE = 'mes-heures-v1';
+const CACHE = 'mes-heures-v2';
 const FICHIERS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
